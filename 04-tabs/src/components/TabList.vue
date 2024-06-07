@@ -12,46 +12,43 @@ provide("panels", panels);
 provide("currentTab", currentTab);
 
 watchEffect(() => {
-  // Todo: Return early if the tabs or panels are empty
-  // Todo: Throw an error if the number of tabs and panels are not equal
-  // An Error can be thrown using the following code:
-  //    throw new Error("The number of tabs and panels must be equal.");
+  if (!panels?.value) return;
+  if (tabs.value.length !== panels?.value.length) {
+    throw new Error("The number of tabs and panels must be equal.");
+  }
 
   tabs.value.forEach((tab, index) => {
-    // Todo: Add the necessary attributes to the tab element
-    // The attributes should be added dinamically using the setAttribute method
-    // The tab element should have the following attributes:
-    //    - aria-controls
-    //    - id
-    //    - role
-    // To give a tab an dynamic id, use string interpolation to add the index value
-    // like this: `tab-${index}`
-    // Check if the tab is the current tab by comparing the index with the currentTab value
-    // Todo: If the tab is the current tab, set or change the following attributes:
-    //    - aria-selected
-    //    - tabindex
-    //    - focus the tab
-    // Todo: If the tab is not the current tab, set or change the following attributes:
-    //    - aria-selected
-    //    - tabindex
+  if (index !== undefined) {
+    tab.setAttribute("aria-controls", `panel-${index}`);
+    tab.setAttribute("id", `tab-${index}`);
+    tab.setAttribute("role", `tab`);
+    if (index === currentTab?.value) {
+      tab.setAttribute("aria-selected", "true");
+      tab.setAttribute("tabindex", `0`);
+      //tabindex 0 -> für die Tastatur über Fokus erreichbar
+      tab.setAttribute("focus", `tab`);
+      tab.focus();
+    } else {
+      tab.setAttribute("aria-selected", "false");
+      tab.setAttribute("tabindex", "-1");
+        //tabindex -1 -> für die Tastatur über Fokus nicht erreichbar
+    }
+  }
+
   });
 
   panels.value.forEach((panel, index) => {
-    // Todo: Add the necessary attributes to the panel element
-    // The attributes should be added dinamically using the setAttribute method
-    // The panel element should have the following attributes:
-    //    - aria-labelledby ( this should be the id of the tab element)
-    //    - id
-    //    - role
-    // To give a panel an dynamic id, use string interpolation to add the index value
-    // like this: `panel-${index}`
-    // Check if the panel is the current panel by comparing the index with the currentTab value
-    // Todo: If the panel is the current panel, set or change the following attributes:
-    //    - aria-hidden
-    //    - remove the hidden class
-    // Todo: If the panel is not the current panel, set or change the following attributes:
-    //    - aria-hidden
-    //    - add the hidden class
+    panel.setAttribute("aria-labelledby", `tab-${index}`);
+    panel.setAttribute("id", `panel-${index}`);
+    panel.setAttribute("role", `tabpanel`);
+
+    if (index === currentTab?.value) {
+      panel.setAttribute("aria-hidden", "false");
+      panel.classList.remove("hidden");
+    } else {
+      panel.setAttribute("aria-hidden", "true");
+      panel.classList.add("hidden");
+    }
   });
 });
 
@@ -60,6 +57,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
   // Listens for the ArrowRight and ArrowLeft keys to navigate between tabs
   // Prevents the default behavior of the arrow keys
   // Updates the currentTab value based on the key pressed
+  if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    event.preventDefault();
+    const newIndex = currentTab.value + (event.key === "ArrowRight" ? 1 : -1);
+    const tabsLength = tabs?.value.length ?? 0;
+    const finalIndex = (newIndex + tabsLength) % tabsLength; // Wrap around if reaching the end
+    currentTab.value = finalIndex;
+  }
 };
 
 const selectTab = (index: number) => {
